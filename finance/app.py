@@ -35,7 +35,19 @@ def after_request(response):
 @login_required
 def index():
     """Show portfolio of stocks"""
-    return apology("TODO")
+    user_id = session["user_id"]
+    response = db.execute(
+        """
+        SELECT symbol, price,SUM(shares) as shares, SUM(price) as total
+        FROM transactions
+        WHERE user_id = ?
+        GROUP BY symbol 
+    """,
+        (user_id,),
+    )
+    db_cash = db.execute("SELECT cash FROM users WHERE id = ?", user_id)
+    db_cash = round(db_cash[0]["cash"], 2)
+    return render_template("index.html", response=response, cash=db_cash)
 
 
 @app.route("/buy", methods=["GET", "POST"])
@@ -45,6 +57,30 @@ def buy():
     if request.method == "POST":
         symbol = request.form.get("symbol")
         shares = request.form.get("shares")
+        if not shares or not symbol:
+            return render_template("buy.html", message="Empty Fields")
+        if float(shares) < 0:
+            return render_template("buy.html", message="Enter Valid Number")
+        symbol = lookup(symbol)
+        if not symbol:
+            return render_template("buy.html", message="No stock found")
+        value = int(shares) * symbol["price"]
+        user_id = session["user_id"]
+        cash = db.execute("SELECT cash FROM users WHERE id = ?", user_id)
+        cash = cash[0]["cash"]
+        if cash < value:
+            return render_template("buy.html", message="Not enough Money")
+        remaining = cash - value
+        db.execute("UPDATE users SET cash = ? WHERE id = ?", remaining, user_id)
+        db.execute(
+            "INSERT INTO transactions (user_id, symbol, shares, price) VALUES (?, ?, ?, ? )",
+            user_id,
+            symbol["symbol"],
+            shares,
+            symbol["price"],
+        )
+        return redirect("/")
+
     else:
         return render_template("buy.html")
 
