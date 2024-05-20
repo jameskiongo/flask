@@ -200,8 +200,8 @@ def register():
 @login_required
 def sell():
     """Sell shares of stock"""
+    user_id = session["user_id"]
     if request.method == "GET":
-        user_id = session["user_id"]
         response = db.execute(
             """
         SELECT symbol, SUM(shares) as shares 
@@ -211,15 +211,17 @@ def sell():
     """,
             (user_id,),
         )
-        #     shares = db.execute(
-        #         """
-        #     SELECT SUM(shares) as shares
-        #     FROM transactions
-        #     WHERE user_id = ?
-        #     GROUP BY symbol
-        # """,
-        #         (user_id,),
-        #     )
-        #
-        print(response)
         return render_template("sell.html", response=response)
+    else:
+        symbol = request.form.get("symbol")
+        shares = request.form.get("shares")
+        if not symbol or not shares:
+            return render_template("sell.html", message="Empty Fields")
+        q_shares = db.execute(
+            """
+        SELECT SUM(shares) as shares FROM transactions WHERE symbol= ? AND user_id = ?
+    """,
+            (symbol, user_id),
+        )
+        print(q_shares)
+        return render_template("index.html")
