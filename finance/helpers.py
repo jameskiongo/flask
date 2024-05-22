@@ -2,11 +2,16 @@ import csv
 import datetime
 import urllib
 import uuid
+from decimal import Decimal
 from functools import wraps
+from numbers import Number
 
 import pytz
 import requests
 from flask import redirect, render_template, request, session
+
+# from jinja2 import Markup
+from markupsafe import Markup
 
 
 def apology(message, code=400):
@@ -86,3 +91,19 @@ def lookup(symbol):
 def usd(value):
     """Format value as USD."""
     return f"${value:,.2f}"
+
+
+def format_currency(value):
+    if not isinstance(value, (Number, Decimal)):
+        raise TypeError("Value must be Number.")
+    if value < 0:
+        return format_currency(-value)
+    return "{:,.2f}".format(value)
+
+
+def format_shares(value):
+    if not isinstance(value, (Number, Decimal)):
+        raise TypeError("Value must be Number.")
+    if value < 0:
+        return format_currency(-value)
+    return "{:,.2f}".format(int(abs(value)))

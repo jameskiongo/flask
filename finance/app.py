@@ -2,15 +2,20 @@ import os
 
 from cs50 import SQL
 from flask import Flask, flash, redirect, render_template, request, session
+from markupsafe import Markup
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from flask_session import Session
-from helpers import apology, login_required, lookup, usd
+from helpers import apology, format_currency, format_shares, login_required, lookup, usd
+
+# from .filters import format_currency
 
 # Configure application
 app = Flask(__name__)
 
 # Custom filter
+app.jinja_env.filters["format_currency"] = format_currency
+app.jinja_env.filters["format_shares"] = format_shares
 app.jinja_env.filters["usd"] = usd
 
 # Configure session to use filesystem (instead of signed cookies)
@@ -38,13 +43,18 @@ def index():
     user_id = session["user_id"]
     response = db.execute(
         """
-        SELECT symbol, price,SUM(shares) as shares, SUM(price) as total
+        SELECT symbol, price,SUM(shares) as shares  
         FROM transactions
         WHERE user_id = ?
         GROUP BY symbol 
+        HAVING SUM(shares) > 0
     """,
         (user_id,),
     )
+    sum = 0
+    for r in response:
+        sum += r["price"] * r["shares"]
+
     db_cash = db.execute("SELECT cash FROM users WHERE id = ?", user_id)
     db_cash = round(db_cash[0]["cash"], 2)
     return render_template("index.html", response=response, cash=db_cash)
@@ -57,10 +67,14 @@ def buy():
     if request.method == "POST":
         symbol = request.form.get("symbol")
         shares = request.form.get("shares")
+        classification = request.form.get("type")
         if not shares or not symbol:
             return render_template("buy.html", message="Empty Fields")
         if float(shares) < 0:
             return render_template("buy.html", message="Enter Valid Number")
+        if classification != "buy":
+            return render_template("buy.html", message="Error")
+
         symbol = lookup(symbol)
         if not symbol:
             return render_template("buy.html", message="No stock found")
@@ -73,11 +87,12 @@ def buy():
         remaining = cash - value
         db.execute("UPDATE users SET cash = ? WHERE id = ?", remaining, user_id)
         db.execute(
-            "INSERT INTO transactions (user_id, symbol, shares, price) VALUES (?, ?, ?, ? )",
+            "INSERT INTO transactions (user_id, symbol, shares, price, type) VALUES (?, ?, ?, ?, ? )",
             user_id,
             symbol["symbol"],
             shares,
             symbol["price"],
+            classification,
         )
         return redirect("/")
 
@@ -88,8 +103,16 @@ def buy():
 @app.route("/history")
 @login_required
 def history():
-    """Show history of transactions"""
-    return apology("TODO")
+    if request.method == "GET":
+        user_id = session["user_id"]
+        response = db.execute("SELECT * FROM transactions WHERE user_id=?", user_id)
+        return render_template("history.html", response=response)
+
+
+# def format_currency(value):
+#     if value < 0:
+#         return abs(value)
+#     return "${:,.2f}".format(value)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -201,27 +224,60 @@ def register():
 def sell():
     """Sell shares of stock"""
     user_id = session["user_id"]
-    if request.method == "GET":
-        response = db.execute(
-            """
+    response = db.execute(
+        """
         SELECT symbol, SUM(shares) as shares 
         FROM transactions
         WHERE user_id = ?
         GROUP BY symbol 
+        HAVING SUM(shares) > 0
     """,
-            (user_id,),
-        )
+        (user_id,),
+    )
+    if request.method == "GET":
         return render_template("sell.html", response=response)
     else:
         symbol = request.form.get("symbol")
-        shares = request.form.get("shares")
+        shares = int(request.form.get("shares"))
+        classification = request.form.get("type")
         if not symbol or not shares:
             return render_template("sell.html", message="Empty Fields")
-        q_shares = db.execute(
-            """
-        SELECT SUM(shares) as shares FROM transactions WHERE symbol= ? AND user_id = ?
-    """,
-            (symbol, user_id),
+        if classification != "sell":
+            return render_template("sell.html", message="Error")
+        if int(shares) < 0:
+            return render_template("sell.html", message="Invalid Number")
+
+        rows = db.execute(
+            "SELECT SUM(shares) as shares FROM transactions WHERE user_id = :user_id AND symbol = :symbol",
+            user_id=user_id,
+            symbol=symbol,
         )
-        print(q_shares)
-        return render_template("index.html")
+        db_shares = int(rows[0]["shares"])
+        if shares > db_shares:
+            return render_template(
+                "sell.html", message="Not Enough shares", response=response
+            )
+        # remainder = db_shares - shares
+        price = lookup(symbol)
+        db.execute(
+            "INSERT INTO transactions (user_id, symbol, shares, price, type) VALUES (?, ?, ?, ?, ? )",
+            user_id,
+            symbol,
+            -shares,
+            price["price"],
+            classification,
+        )
+
+        price = lookup(symbol)
+        share_price = int(price["price"])
+        # shares i've sold
+        # multiply by share price
+        send_cash = share_price * shares
+        # Add that to cash
+        db_cash = db.execute("SELECT cash FROM users WHERE id = ?", user_id)
+        db_cash = db_cash[0]["cash"]
+        send_to_db_cash = db_cash + send_cash
+
+        db.execute("UPDATE users SET cash = ? WHERE id = ?", send_to_db_cash, user_id)
+
+        return redirect("/")

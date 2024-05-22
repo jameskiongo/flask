@@ -1,41 +1,39 @@
 {% extends "layout.html" %}
-{% block title %}
-Home
-{% endblock %}
+{% block title %}Home{% endblock %}
 {% block main %}
-<!-- <h1>{{response}}</h1> -->
-<!-- <h1>{{cash}}</h1> -->
-<!-- <h1>{{shares}}</h1> -->
-<body>
-  <main class="container py-5 text-center">
-    <table class="table table-striped">
-      <thead>
-        <tr>
-          <th scope="col">Symbol</th>
-          <th scope="col">Shares</th>
-          <th scope="col">Price</th>
-          <th scope="col">Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for r in response %}
-        <tr>
-          <th scope="row">{{r.symbol}}</th>
-          <td>{{r.shares}}</td>
-          <td>{{r.price}}</td>
-          <td>{{r.total}}</td>
-        </tr>
-        {%endfor%}
-        <tfoot>
-          <tr>
-            <th scope="row"></th>
-            <td></td>
-            <th>Balance</th>
-            <td>{{cash}}</td>
-          </tr>
-        </tfoot>
-      </tbody>
-    </table>
-  </main>
-</body>
+    <!-- <h1>{{response}}</h1> -->
+    <!-- <h1>{{cash}}</h1> -->
+    <!-- <h1>{{shares}}</h1> -->
+    <body>
+        <main class="container py-5 text-center">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th scope="col">Symbol</th>
+                        <th scope="col">Shares</th>
+                        <th scope="col">Price</th>
+                        <th scope="col">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in response %}
+                        <tr>
+                            <th scope="row">{{ r.symbol }}</th>
+                            <td>{{ r.shares }}</td>
+                            <td>${{ r.price }}</td>
+                            <td>${{ r.shares*r.price }}</td>
+                        </tr>
+                    {% endfor %}
+                    <tfoot>
+                        <tr>
+                            <th scope="row"></th>
+                            <td></td>
+                            <th>Balance</th>
+                            <td>${{ cash }}</td>
+                        </tr>
+                    </tfoot>
+                </tbody>
+            </table>
+        </main>
+    </body>
 {% endblock %}
