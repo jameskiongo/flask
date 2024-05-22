@@ -281,3 +281,33 @@ def sell():
         db.execute("UPDATE users SET cash = ? WHERE id = ?", send_to_db_cash, user_id)
 
         return redirect("/")
+
+
+@app.route("/change", methods=["GET", "POST"])
+@login_required
+def change():
+    if request.method == "GET":
+        user_id = session["user_id"]
+        rows = db.execute("SELECT * FROM users WHERE id= ?", user_id)
+        name = rows[0]["username"]
+
+        return render_template("change.html", name=name)
+    else:
+        user_id = session["user_id"]
+        current = request.form.get("current")
+        password = request.form.get("password")
+        confirm = request.form.get("confirm")
+        if not current or not password or not confirm:
+            return render_template("change.html", message="Empty Field")
+        if password != confirm:
+            return render_template("change.html", message="Passwords Must be the same")
+        if len(password) < 6:
+            return render_template("change.html", message="Passwords too short")
+        rows = db.execute("SELECT * FROM users WHERE id= ?", user_id)
+        if not check_password_hash(rows[0]["hash"], request.form.get("current")):
+            return render_template("change.html", message="invalid password")
+        hash = generate_password_hash(password)
+        db.execute("UPDATE users SET hash= ? WHERE id = ?", hash, user_id)
+        flash("Successfully Changed")
+        session["user_id"] = rows[0]["id"]
+        return redirect("/")
