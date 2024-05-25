@@ -1,4 +1,6 @@
 import os
+import re
+from numbers import Number
 
 from cs50 import SQL
 from flask import Flask, flash, redirect, render_template, request, session
@@ -70,11 +72,19 @@ def buy():
         classification = request.form.get("type")
         if not shares or not symbol:
             return render_template("buy.html", message="Empty Fields")
+        if not isinstance(shares, Number):
+            return render_template("buy.html", message="Must be a number")
         if float(shares) < 0:
             return render_template("buy.html", message="Enter Valid Number")
         if classification != "buy":
             return render_template("buy.html", message="Error")
+        if not isinstance(shares, Number):
+            return render_template("buy.html", message="Must be a number")
 
+        # try:
+        #     input = float(shares)
+        # except ValueError:
+        #     return render_template("buy.html", message="Must be a number")
         symbol = lookup(symbol)
         if not symbol:
             return render_template("buy.html", message="No stock found")
@@ -204,6 +214,10 @@ def register():
             return render_template(
                 "register.html", message="Password too short (Min 6 characters)"
             )
+        # elif password_check(password):
+        #     return render_template(
+        #         "register.html", message="Password too short (Min 6 characters)"
+        #     )
         elif password != confirm:
             return render_template("register.html", message="Passwords do not match")
         else:
@@ -216,7 +230,6 @@ def register():
 
     else:
         return render_template("register.html")
-    # return apology("TODO")
 
 
 @app.route("/sell", methods=["GET", "POST"])
@@ -238,21 +251,24 @@ def sell():
         return render_template("sell.html", response=response)
     else:
         symbol = request.form.get("symbol")
-        shares = int(request.form.get("shares"))
+        shares = request.form.get("shares")
         classification = request.form.get("type")
         if not symbol or not shares:
             return render_template("sell.html", message="Empty Fields")
         if classification != "sell":
             return render_template("sell.html", message="Error")
-        if int(shares) < 0:
+        if not isinstance(shares, Number):
+            return render_template("sell.html", message="Must be a number")
+        if float(shares) < 0:
             return render_template("sell.html", message="Invalid Number")
+        shares = float(shares)
 
         rows = db.execute(
             "SELECT SUM(shares) as shares FROM transactions WHERE user_id = :user_id AND symbol = :symbol",
             user_id=user_id,
             symbol=symbol,
         )
-        db_shares = int(rows[0]["shares"])
+        db_shares = float(rows[0]["shares"])
         if shares > db_shares:
             return render_template(
                 "sell.html", message="Not Enough shares", response=response

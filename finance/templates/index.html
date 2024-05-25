@@ -5,10 +5,49 @@
     <!-- <h1>{{cash}}</h1> -->
     <!-- <h1>{{shares}}</h1> -->
     <body>
+        <div class="modal" id="buyModal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <!-- Modal Header -->
+                    <div class="modal-header">
+                        <h4 class="modal-title">Buy Stock</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <!-- Modal Body -->
+                    <div class="modal-body">
+                        <form id="buyForm">
+                            <div class="form-group">
+                                <label for="stockSymbol">Stock Symbol:</label>
+                                <input type="text"
+                                       class="form-control"
+                                       id="stockSymbol"
+                                       name="symbol"
+                                       required>
+                            </div>
+                            <div class="form-group">
+                                <label for="quantity">Quantity:</label>
+                                <input type="number"
+                                       class="form-control"
+                                       id="quantity"
+                                       name="shares"
+                                       required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Buy</button>
+                        </form>
+                    </div>
+                    <!-- Modal Footer -->
+                    <div class="modal-footer">
+                        <div id="buyResult"></div>
+                        <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         <main class="container py-5 text-center">
             <table class="table table-striped">
                 <thead>
                     <tr>
+                        <th scope="col"></th>
                         <th scope="col">Symbol</th>
                         <th scope="col">Shares</th>
                         <th scope="col">Price</th>
@@ -18,6 +57,13 @@
                 <tbody>
                     {% for r in response %}
                         <tr>
+                            <th>
+                                <button type="button"
+                                        class="btn btn-primary"
+                                        data-toggle="modal"
+                                        data-target="#buyModal">Buy</button>
+                                <button class="btn btn-secondary">Sell</button>
+                            </th>
                             <th scope="row">{{ r.symbol }}</th>
                             <td>{{ r.shares }}</td>
                             <td>${{ r.price }}</td>
@@ -27,6 +73,7 @@
                     <tfoot>
                         <tr>
                             <th scope="row"></th>
+                            <th scope="row"></th>
                             <td></td>
                             <th>Balance</th>
                             <td>${{ cash }}</td>
@@ -35,5 +82,31 @@
                 </tbody>
             </table>
         </main>
+        <script>
+        $(document).ready(function() {
+            $('#buyForm').submit(function(event) {
+                event.preventDefault();
+
+                var symbol= $('#stockSymbol').val();
+                var shares= $('#quantity').val();
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/buy',
+                    data: { symbol: symbol, shares: shares},
+                    contentType: 'application/json',
+                    success: function(response) {
+                        $('#buyResult').html('<p>' + response.message + '</p>');
+                        // Close the modal after successful submission
+                        $('#buyModal').modal('hide');
+                    },
+                    error: function(xhr) {
+                        var errorResponse = JSON.parse(xhr.responseText);
+                        $('#buyResult').html('<p>' + errorResponse.message + '</p>');
+                    }
+                });
+            });
+        });
+        </script>
     </body>
 {% endblock %}
