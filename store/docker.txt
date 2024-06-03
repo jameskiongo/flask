@@ -1,0 +1,5 @@
+Kernel: An OS made up of two main parts: the kernel and files
+Interacts with and controls the hardware
+Docker image: snapshot of source code, libraries, dependencies, tools and everythin
+needed to run
+We use Docerfiles to build images
