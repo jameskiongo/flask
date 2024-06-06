@@ -14,6 +14,15 @@
     <link href="/static/styles.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.2/css/fontawesome.min.css" integrity="sha384-BY+fdrpOd3gfeRvTSMT+VUZmA728cfF9Z2G42xpaRkUGu2i3DyzpTURDo5A6CaLK" crossorigin="anonymous">
     <title>C$50 Finance: {% block title %}{% endblock %}</title>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="alert alert-danger" role="alert">
+      {% for message in messages %}
+      <li>{{ message }}</li>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
   </head>
   <body>
     <main class="container-fluid py-5 text-center">

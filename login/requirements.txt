@@ -6,4 +6,7 @@ Flask-SQLAlchemy
 flask-jwt-extended
 passlib
 Flask-WTF
+Flask-WTF[Email]
 Flask-Session
+db-sqlite3
+Werkzeug
