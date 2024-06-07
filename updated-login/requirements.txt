@@ -1,0 +1,12 @@
+flask
+flask-smorest
+python-dotenv
+sqlalchemy
+Flask-SQLAlchemy
+flask-jwt-extended
+Flask-WTF
+Flask-WTF[Email]
+flask_bcrypt
+Flask-Session
+db-sqlite3
+flask-login
