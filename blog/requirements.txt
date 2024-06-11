@@ -1,0 +1,9 @@
+flask
+Flask-SQLAlchemy
+flask-WTF
+flask-WTF[email]
+flask_bcrypt
+flask-login
+python-dotenv
+flask_session
+werkzeug

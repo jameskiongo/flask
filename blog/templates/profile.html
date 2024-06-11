@@ -1,0 +1,20 @@
+{% extends "layout.html" %}
+{% block title %}Home - Flask Blog{% endblock %}
+{% block main%}
+<div class="container mt-5">
+  <div class="row">
+    <div class="col-md-4">
+      <div class="card rounded">
+        <img src="{{user.image_file}}" class="card-img-top" alt="User Image">
+        <div class="card-body">
+          <label for="content">Username</label>
+          <div class="form-group">
+            <input type="text" class="form-control text-capitalize" value="{{ user.username }}" disabled></div>
+          <label for="content">Email</label>
+          <div class="form-group"><input type="text" disabled class="form-control text-capitalize" value="{{ user.email}}"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

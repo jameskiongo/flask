@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title></title>
+    <link href="css/style.css" rel="stylesheet">
+  </head>
+  <body>
+    {%if session %}
+    <div>
+      <p><a href="{{url_for('logout')}}">Logout</a></p>
+      <p>{{session.userinfo.name}}</p>
+      <p>{{session.userinfo.email}}</p>
+      <img src="{{session.userinfo.picture}}" alt="{{session.userinfo.name}}">
+      <pre>{{pretty}}</pre>
+    </div>
+    {% else%}
+    <p><a href="{{url_for('googleLogin')}}">Login with Google</a></p>
+    {% endif %}
+  </body>
+</html>
